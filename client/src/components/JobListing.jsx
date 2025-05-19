@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../context/AppContext";
 import { assets, JobCategories, JobLocations } from "../assets/assets";
 import { JobCard } from "./JobCard";
@@ -9,6 +9,47 @@ export const JobListing = () => {
 
   const [showFilter, setShowFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [seletedCategories, setSeletedCategories] = useState([]);
+  const [seletedLocations, setSeletedLocations] = useState([]); 
+
+  const[filterJobs,setFilterJobs]=useState(jobs);
+
+  const handleCategoryChange = (category) => {
+    setSeletedCategories(
+      prev => prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
+    )
+  }
+  
+  const handleLocationChange = (location) => {
+    setSeletedLocations(
+      prev => prev.includes(location) ? prev.filter(c => c !== location) : [...prev, location]
+    )
+  }
+
+  useEffect(() => {
+    const matchesCategory= job => seletedCategories.length===0 || seletedCategories.includes(job.category);
+
+    const matchesLocation= job => seletedLocations.length===0 || seletedLocations.includes(job.location);
+
+    const matchestitle= job => searchFilter.title === "" || job.title.toLowerCase().includes(searchFilter.title.toLowerCase());
+
+    const matchesSearchLocation= job => searchFilter.location === "" || job.location.toLowerCase().includes(searchFilter.location.toLowerCase());
+
+    const newFilterJobs=jobs.slice().reverse().filter(
+      job=> matchesCategory(job) &&
+      matchesLocation(job) && 
+      matchesSearchLocation(job) &&
+      matchestitle(job)
+    )
+
+    setFilterJobs(newFilterJobs);
+    setCurrentPage(1);
+
+
+
+  },[jobs, seletedCategories, seletedLocations, searchFilter.title, searchFilter.location])
+
+
 
   return (
     <div className="container 2xl:px-20 mx-auto flex flex-col lg:flex-row max-lg:space-y-8 py-9">
@@ -68,6 +109,8 @@ export const JobListing = () => {
                   type="checkbox"
                   name={category}
                   id={category}
+                  onChange={()=> handleCategoryChange(category)}
+                  checked={seletedCategories.includes(category)}
                 />
                 <span>{category}</span>
               </li>
@@ -88,6 +131,8 @@ export const JobListing = () => {
                   type="checkbox"
                   name={location}
                   id={location}
+                  onChange={()=> handleLocationChange(location)}
+                  checked={seletedLocations.includes(location)}
                 />
                 <span>{location}</span>
               </li>
@@ -103,15 +148,14 @@ export const JobListing = () => {
         </h3>
         <p className="mb-8">Get your desired job form top companies</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 ">
-          {jobs
-            .slice((currentPage - 1) * 6, currentPage * 6)
+          {filterJobs.slice((currentPage - 1) * 6, currentPage * 6)
             .map((job, index) => (
               <JobCard key={index} job={job} />
             ))}
         </div>
 
         {/* pagination */}
-        {jobs.length > 0 && (
+        {filterJobs.length > 0 && (
           <div className="flex items-center justify-center space-x-2 mt-10">
             <a href="#job-list">
               <img
@@ -126,8 +170,8 @@ export const JobListing = () => {
               />
             </a>
 
-            {Array.from({ length: Math.ceil(jobs.length / 6) }).map((_, i) => (
-              <a href="#job-list">
+            {Array.from({ length: Math.ceil(filterJobs.length / 6) }).map((_, i) => (
+              <a key={i} href="#job-list">
                 <button
                   onClick={() => setCurrentPage(i + 1)}
                   className={`w-10 h-10 flex items-center justify-center border border-gray-300 rounded ${
@@ -145,13 +189,13 @@ export const JobListing = () => {
               <img
                 onClick={() =>
                   setCurrentPage((prev) =>
-                    Math.min(prev + 1, Math.ceil(jobs.length / 6))
+                    Math.min(prev + 1, Math.ceil(filterJobs.length / 6))
                   )
                 }
                 src={assets.right_arrow_icon}
                 alt="rightArrow"
                 className={`${
-                  currentPage === Math.ceil(jobs.length / 6)
+                  currentPage === Math.ceil(filterJobs.length / 6)
                     ? "opacity-50 cursor-not-allowed"
                     : "cursor-pointer"
                 }`}
