@@ -5,7 +5,9 @@
 *{
   font-family: outfit;
 }
-
+button{
+  cursor: pointer;
+}
 @layer base {
   html{
     scroll-behavior: smooth;
